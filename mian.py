@@ -11,12 +11,12 @@ from function1 import *
 from fig import *
 
 # 读取数据
-old_data = np.genfromtxt('output123.csv', delimiter=',', skip_header=1, dtype=int)
-header = np.genfromtxt('output123.csv', delimiter=',', dtype=str, max_rows=1)
-
+old_data = np.genfromtxt('output1234.csv', delimiter=',', skip_header=1, dtype=int)
+header = np.genfromtxt('output1234.csv', delimiter=',', dtype=str, max_rows=1)
+max_class=[66, 7, 16, 7, 15, 6, 5, 2, 56, 2]
 # 定义get_pij函数
-def get_pij(r, w, h, e):
-    return r * w * ( h) * e
+def get_pij(r, w, h, e,p=1):
+    return r * w * ( h) * e*p
 
 # 层次分析法比较矩阵
 comparison_matrix1 = np.array([
@@ -61,13 +61,85 @@ P = np.zeros_like(old_data, dtype=float)
 print(ahp)
 print(entropy)
 print(w)
-# 计算P矩阵
+p1=get_p1(old_data, 0)
+
 for i, row in enumerate(old_data):
     for j, x in enumerate(row):
-        r = calculate_privacy_coefficient(old_data, [x], [j])
+        r = p1[i][j]
+        r = -np.log(r)
         P[i, j] = get_pij(r, w[j], ahp[j], entropy[j])
 P_row_sums = P.sum(axis=1, keepdims=True)
 P_normalized = P / P_row_sums
 Q=P_normalized.sum(axis=0)
-Q=Q/Q.sum()
 print(Q)
+print(sum(Q))
+average_privacy_loss=0
+Q=[1/i  for i in Q]
+w_laplace=Q/sum(Q)*len(Q)
+#w_laplace=np.ones(len(Q))
+for q in range(old_data.shape[1]):
+    a=calculate_average_privacy_loss(old_data, q,[0],max_class)
+    average_privacy_loss+=a
+print( average_privacy_loss/old_data.shape[1])
+print('------')
+#-------------
+
+beta0 = 0.5
+beta=np.full(len(max_class),beta0)*w_laplace
+
+# 给数据添加拉普拉斯噪声
+noisy_data = laplace_mech(old_data, beta)
+#-------------
+
+p2=get_p111(noisy_data,beta,max_class)
+entropy1,p_i=get_p_entropy(old_data,noisy_data,beta,max_class)
+
+average_privacy_loss=0
+for q in range(noisy_data.shape[1]):
+    a=calculate_average_privacy_loss(noisy_data, q,beta,max_class)
+    average_privacy_loss+=a
+print( average_privacy_loss/noisy_data.shape[1])
+
+for i, row in enumerate(noisy_data):
+    for j, x in enumerate(row):
+        r = p2[i][j]
+        r = -np.log(r)
+        P[i, j] = get_pij(r, w[j], ahp[j], entropy1[j],p=p_i[i][j])
+P_normalized = P / P_row_sums
+Q=P_normalized.sum(axis=0)
+print(Q)
+print(sum(Q))
+
+'''
+awsfg
+
+
+print('bb', (P.sum(axis=1, keepdims=True)[0]))
+P_normalized = P / P_row_sums
+Q=P_normalized.sum(axis=0)
+print(Q.sum()) 
+print(p1[ :,0][:10])
+print(pp1[ :,0][:10])
+print(get_p1(old_data,0)[:10,0])
+print( (get_p111(noisy_data,beta,max_class) )[:10,0])
+print(entropy)
+print(get_p_entropy(old_data,noisy_data,beta,max_class))
+
+print("原始数据:")
+print(old_data)
+print("添加噪声后的数据:")
+print(noisy_data)
+privacy_loss=[ calculate_average_privacy_loss(old_data,j) for j in  range( (old_data.shape[1]))]
+print(privacy_loss )
+print(Q)
+ 
+print(get_entropy(get_p1(old_data,0)))
+print(get_entropy(get_p1(noisy_data,beta) ))
+print(get_entropy(get_p11(noisy_data,beta,max_class) ))
+print(get_p1(old_data,0)[:10,0])
+print(get_p1(old_data,0)[:,0].sum())
+print(get_p1(old_data,beta)[:10,0])
+print(get_p1(old_data,beta)[:,0].sum())
+print(get_p11(noisy_data,beta,max_class)[:10,0])
+print(get_p11(noisy_data,beta,max_class)[:,0].sum())
+'''

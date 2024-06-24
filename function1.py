@@ -37,7 +37,8 @@ def calculate_entropy(data):
     for j in range(num_features):
         values, counts = np.unique(data[:, j], return_counts=True)  # 计算每个值的出现次数
         prob_dist = counts / counts.sum()  # 归一化为概率分布
-        entropies[j] = entropy(prob_dist)  # 计算信息熵
+        unique_prob_dist = np.unique(prob_dist)  # 去重
+        entropies[j] = entropy(unique_prob_dist)  # 计算信息熵
 
     return entropies
 
