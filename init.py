@@ -6,7 +6,7 @@ import os
 specified_columns = [4, 5, 7, 9, 10, 11, 12, 13, 16, 18]
 
 # 定义不需要映射的列索引列表
-at = [ ]
+at = []
 
 # 检查输入文件是否存在
 input_file = 'adult_with_pii.csv'
@@ -22,16 +22,11 @@ with open(input_file, 'r') as csvfile:
 
     # 初始化一个列表来存储所有行的数据
     data = []
-    # 读取文件中的前1000行数据
-    for _ in range(1000):
-        try:
-            row = next(csvreader)
-            # 仅选择指定的列
-            selected_row = [row[i] for i in specified_columns]
-            data.append(selected_row)
-        except StopIteration:
-            # 如果数据不足1000行，提前终止循环
-            break
+    # 读取文件中的所有数据
+    for row in csvreader:
+        # 仅选择指定的列
+        selected_row = [row[i] for i in specified_columns]
+        data.append(selected_row)
 
 # 对每列进行字符到数字的映射，并统计类别个数，除了at列表中的列
 column_classes_count = [defaultdict(int) for _ in range(len(selected_header))]
@@ -53,17 +48,26 @@ total_classes_array = [len(column_classes_count[col_index]) for col_index in ran
 # 输出每列的类别总数数组
 print(total_classes_array)
 
-# 输出文件的路径
-output_file = 'output1234.csv'
+# 创建输出目录
+output_dir = 'outputs'
+os.makedirs(output_dir, exist_ok=True)
 
-# 将修改后的数据保存到新的CSV文件
-try:
-    with open(output_file, 'w', newline='') as output_csvfile:
-        writer = csv.writer(output_csvfile)
-        # 写入标题行
-        writer.writerow(selected_header)
-        # 写入修改后的数据
-        writer.writerows(data)
-    print(f"Data successfully written to {output_file}")
-except IOError as e:
-    print(f"An error occurred while writing to the file {output_file}: {e}")
+# 将数据分块存储到多个CSV文件中，每个文件包含累积的行数据
+chunk_size = 1000
+num_chunks = (len(data) + chunk_size - 1) // chunk_size  # 计算总块数
+
+for chunk_index in range(num_chunks):
+    end_index = (chunk_index + 1) * chunk_size
+    chunk_data = data[:end_index]
+    output_file = f'{output_dir}/output{chunk_index}.csv'
+
+    try:
+        with open(output_file, 'w', newline='') as output_csvfile:
+            writer = csv.writer(output_csvfile)
+            # 写入标题行
+            writer.writerow(selected_header)
+            # 写入当前块的数据
+            writer.writerows(chunk_data)
+        print(f"Data successfully written to {output_file}")
+    except IOError as e:
+        print(f"An error occurred while writing to the file {output_file}: {e}")
