@@ -320,6 +320,7 @@ def get_p_entropy(old_data,old_data1, beta0, max_class):
 
             value += len(class_entities)
         jg=np.array(jg)/sum(jg)
+
         A.append(entropy(jg))
 
 
@@ -422,7 +423,7 @@ def calculate_average_privacy_loss(data, j,beta0,max_class):
     - Average privacy loss.
     """
     n = data.shape[0]
-    mode=1
+    mode=0
     beta0=np.array(beta0)
     initial_probs = np.ones(n) / n  # Assuming equal probability for each entity initially
     attribute_values = data[:, j]
@@ -434,6 +435,31 @@ def calculate_average_privacy_loss(data, j,beta0,max_class):
     unique_values = np.arange(max_class[j])
     partitions = [np.where(attribute_values == value)[0] for value in unique_values]
     if beta0.any() == 0:
+     if(mode==0):
+         partition_entropies = []
+         partition_probs = []
+
+         for partition in partitions:
+             partition_prob = np.sum([initial_probs[i] for i in partition])
+             partition_probs.append(partition_prob)
+
+             if partition_prob > 0:
+
+                 partition_entropy =  (len(partition))
+             else:
+                 partition_entropy = 0
+
+             partition_entropies.append(partition_entropy)
+
+         average_privacy_loss = np.sum([
+             partition_probs[i] * (partition_entropies[i])
+             for i in range(len(partitions))
+         ])*S0
+
+
+
+     else:
+
         # Calculate partition entropies and probabilities
         partition_entropies = []
         partition_probs = []
@@ -444,6 +470,7 @@ def calculate_average_privacy_loss(data, j,beta0,max_class):
 
             if partition_prob > 0:
                 conditional_probs = [initial_probs[i] / partition_prob for i in partition]
+
                 partition_entropy = calculate_entropy(conditional_probs)
             else:
                 partition_entropy = 0
@@ -470,11 +497,20 @@ def calculate_average_privacy_loss(data, j,beta0,max_class):
         pp = np.sum(probs, axis=0)
         pp = pp / sum(pp)
         average_privacy_loss = 0
+
         for id, col in enumerate(zip(*probs)):
-            col = sorted(col)
+            col = sorted(col )
+            col=np.array(col)
+            '''
+            pro=col@np.arange(1,len(col)+1)
+
+            average_privacy_loss+=pp[id]*pro
+         '''
             jg = np.array(expected([col]))[0]
             pro = np.ones(jg) / jg # Assuming
-            average_privacy_loss += pp[id] * (S0-calculate_entropy(pro))
+            average_privacy_loss += pp[id] * (jg)
+
+        average_privacy_loss=average_privacy_loss*S0
 
 
     else:

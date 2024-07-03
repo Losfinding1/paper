@@ -2,6 +2,29 @@ from collections import Counter
 import  numpy as np
 
 
+def calculate_combined_weights(w, p_final):
+    """
+    计算结合客观权重和主观权重的最终权重。
+
+    参数：
+    w -- numpy 数组，表示客观权重
+    p_final -- numpy 数组，表示主观权重
+
+    返回值：
+    w_final -- numpy 数组，表示结合后的最终权重
+    """
+
+    # 计算 α 和 β
+    def Co(w, p_final):
+        return np.sqrt(np.sum((w - p_final) ** 2) / (2 * len(w)))
+
+    Co_value = Co(w, p_final)
+    alpha = Co_value / (1 + Co_value)
+    beta = 1 - alpha
+
+    # 计算最终权重 w_final
+    w_final = alpha * w + beta * p_final
+    return w_final
 def calculate_privacy_coefficient(data, values, indices):
     """
     计算数据矩阵中符合指定条件的行数，并基于此计算隐私系数 r。
@@ -37,7 +60,7 @@ def calculate_entropy(data):
     for j in range(num_features):
         values, counts = np.unique(data[:, j], return_counts=True)  # 计算每个值的出现次数
         prob_dist = counts / counts.sum()  # 归一化为概率分布
-        unique_prob_dist = np.unique(prob_dist)  # 去重
+        unique_prob_dist=prob_dist
         entropies[j] = entropy(unique_prob_dist)  # 计算信息熵
 
     return entropies
@@ -84,6 +107,9 @@ def calculate_weights(data):
     """
     vc = calculate_variation_coefficient(data)  # 计算区分度
     independence = calculate_independence(data)  # 计算独立度
+
+
+
     weights = vc * independence  # 结合区分度和独立度
     weights /= np.sum(weights)  # 归一化权重
     return weights

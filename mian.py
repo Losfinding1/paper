@@ -19,9 +19,9 @@ header = np.genfromtxt('output1234.csv', delimiter=',', dtype=str, max_rows=1)
 max_class = [66, 7, 16, 7, 15, 6, 5, 2, 56, 2]
 
 # 定义get_pij函数
-def get_pij(r, w, h, e, p=1):
-    return r * w * h * e * p
-def process_data(data, max_class, weights, ahp_weights, entropy_values, get_p_func):
+def get_pij(r, w, e, p=1):
+    return r * w * e * p
+def process_data(data, max_class, w_final, entropy_values, get_p_func):
     # 初始化P矩阵，形状与old_data相同
     P = np.zeros_like(data, dtype=float)
 
@@ -33,7 +33,7 @@ def process_data(data, max_class, weights, ahp_weights, entropy_values, get_p_fu
         for j, x in enumerate(row):
             r = p[i][j]
             r = -np.log(r)
-            P[i, j] = get_pij(r, weights[j], ahp_weights[j], entropy_values[j])
+            P[i, j] = get_pij(r, w_final[j], entropy_values[j])
 
     # 归一化P矩阵
     P_row_sums = P.sum(axis=1, keepdims=True)
@@ -44,15 +44,15 @@ def process_data(data, max_class, weights, ahp_weights, entropy_values, get_p_fu
 
 
     # 计算平均隐私损失
-    average_privacy_loss = 0
+    average_privacy_loss = []
     for q in range(data.shape[1]):
         a = calculate_average_privacy_loss(data, q, [0], max_class)
-        average_privacy_loss += a
+        average_privacy_loss .append(a)
 
 
 
-    return Q, average_privacy_loss / data.shape[1], P_row_sums
-def process_noisy_data(noisy_data, old_data, max_class, weights, ahp_weights, P_row_sums, beta):
+    return Q, sum(average_privacy_loss )/ len(average_privacy_loss ), P_row_sums,average_privacy_loss
+def process_noisy_data(noisy_data, old_data, max_class, w_final, P_row_sums, beta):
     # 计算噪声数据的概率p2
     p2 = get_p111(noisy_data, beta, max_class)
 
@@ -60,10 +60,10 @@ def process_noisy_data(noisy_data, old_data, max_class, weights, ahp_weights, P_
     entropy1, p_i = get_p_entropy(old_data, noisy_data, beta, max_class)
 
     # 计算噪声数据的平均隐私损失
-    average_privacy_loss_noisy = 0
+    average_privacy_loss_noisy = []
     for q in range(noisy_data.shape[1]):
         a = calculate_average_privacy_loss(noisy_data, q, beta, max_class)
-        average_privacy_loss_noisy += a
+        average_privacy_loss_noisy .append(a)
 
 
     # 重新计算P矩阵
@@ -72,30 +72,30 @@ def process_noisy_data(noisy_data, old_data, max_class, weights, ahp_weights, P_
         for j, x in enumerate(row):
             r = p2[i][j]
             r = -np.log(r)
-            P[i, j] = get_pij(r, weights[j], ahp_weights[j], entropy1[j], p=p_i[i][j])
+            P[i, j] = get_pij(r,  w_final[j], entropy1[j],p=p_i[i][j])
 
     # 归一化P矩阵
     P_normalized = P / P_row_sums
     Q = P_normalized.sum(axis=0)
 
 
-    return Q, average_privacy_loss_noisy / noisy_data.shape[1]
+    return Q, sum(average_privacy_loss_noisy) / noisy_data.shape[1],Q
 
-def add_laplace_noise(data,  Q, mode, beta0=0.5,):
+def add_laplace_noise(data,  Q, loss,mode, beta0=0.5,):
     if(mode==0):
         w_laplace = np.full(len(max_class),1)
     if(mode==1):
         entropy = calculate_entropy(old_data)
-        Q_inv = np.array([ 1/i for i in entropy])
+        Q_inv = np.array([ i for i in entropy])
         w_laplace = Q_inv / sum(Q_inv) * len(Q_inv)
     if(mode==2):
-        Q_inv = np.array([1 / i for i in max_class])
+        Q_inv = np.array([ i for i in max_class])
         w_laplace = Q_inv / sum(Q_inv) * len(Q_inv)
     if(mode==3):
-        Q_inv = [1 / i for i in Q]
+        Q_inv = [1/i for i in Q]
         w_laplace = Q_inv / sum(Q_inv) * len(Q_inv)
-
     beta = np.full(len(max_class), beta0) * w_laplace
+
     noisy_data = laplace_mech(data, beta)
     return noisy_data, beta
 # 层次分析法比较矩阵
@@ -111,30 +111,20 @@ comparison_matrix1 = np.array([
     [4, 2, 2/3, 3/2, 2, 2/3, 2, 2, 1, 1/4],
     [8, 7, 6, 6, 5, 4, 3, 3, 4, 1]
 ])
-comparison_matrix2 = np.array([
-    [1, 0.316, 0.25, 0.25, 0.2, 0.167, 0.25, 0.143*1.1, 0.25, 0.125*1.1],
-    [2.86, 1, 0.5, 0.5, 0.4, 0.286, 0.4, 0.286*1.1, 0.5, 0.143*1.1],
-    [4, 2, 1, 1.5, 0.5, 0.5, 0.333, 0.4*1.1, 1.5, 0.167*1.1],
-    [4, 2.4, 0.667, 1, 0.5, 0.333, 0.333, 0.4*1.1, 0.5, 0.167*1.1],
-    [5, 3, 2, 2, 1, 0.5, 0.333, 0.333*1.1, 0.5, 0.2*1.1],
-    [6, 4, 2, 1.5, 2, 1, 0.5, 0.4*1.1, 1.5, 0.333*1.1],
-    [4, 3, 1.5, 2, 3, 2, 1, 0.4*1.1, 0.5, 0.333*1.1],
-    [7, 6, 5, 5, 4, 3, 3, 1, 0.667, 0.4],
-    [4, 2, 0.667, 1.5, 2, 0.667, 2, 2, 1, 0.333],
-    [8, 7, 6, 6, 5, 4, 3, 3, 4, 1]
-])
+
 
 
 
 yshl=[]
 yssl=[]
-for i in range(1,2):
-    filepath='outputs/output'+str(i)+'.csv'
+bet=[0.1,0.2,0.3,0.4,0.5]
+for i in range(4):
+    filepath='outputs/output'+str(0)+'.csv'
     old_data = np.genfromtxt(filepath, delimiter=',', skip_header=1, dtype=int)
     #print("数据头部:", header)
 
     # 计算AHP权重
-    ahp = generate_ahp_weights(comparison_matrix2)
+    ahp = generate_ahp_weights(comparison_matrix1)
     #print("AHP权重:", ahp)
 
     # 计算信息熵
@@ -144,8 +134,8 @@ for i in range(1,2):
     # 计算区分度和独立度并结合起来得到最终权重
     w = calculate_weights(old_data)
     #print("权重:", w)
-
-    Q, avg_privacy_loss, P_row_sums = process_data(old_data, max_class, w, ahp, entropy, get_p1)
+    w_final=calculate_combined_weights(w,ahp)
+    Q, avg_privacy_loss, P_row_sums,loss = process_data(old_data, max_class,w_final, entropy, get_p1)
     # print("平均隐私损失:", avg_privacy_loss)
     # print(sum(Q))
     # print('------')
@@ -154,9 +144,9 @@ for i in range(1,2):
     hl.append(sum(Q))
     sl.append(avg_privacy_loss)
     for ss in range(4):
-        noisy_data, beta = add_laplace_noise(old_data, Q,mode=ss, beta0=0.5)
-        Q_noisy, avg_privacy_loss_noisy = process_noisy_data(noisy_data, old_data, max_class, w, ahp,
-                                                              P_row_sums, beta)
+        noisy_data, beta = add_laplace_noise(old_data, Q,loss,mode=ss, beta0=bet[i])
+        Q_noisy, avg_privacy_loss_noisy,prc = process_noisy_data(noisy_data, old_data, max_class,w_final,
+                                                          P_row_sums, beta)
         hl.append(sum(Q_noisy))
         sl.append(avg_privacy_loss_noisy)
     # print("平均隐私损失:", avg_privacy_loss_noisy)
@@ -169,6 +159,11 @@ for i in range(1,2):
     print('---------------------------------------------------------------------------------')
 print(yshl)
 print(yssl)
+yshl=np.array(yshl)
+yssl=np.array(yssl)
+yssl= yssl / yshl[:, 0][:, np.newaxis]
+zh = np.multiply(yssl, yshl)
+print(zh)
 
 
 
