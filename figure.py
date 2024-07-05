@@ -40,7 +40,7 @@ hl1=[[999.9999999999993, 170.00860020625242, 99.14280504653728, 191.743057378452
 xl1=[[0.23711040346982962, 0.15927944202052952, 0.15312438031101624, 0.16736777476666082, 0.19446824234770088], [0.214477766682788, 0.1442918227495029, 0.13920403634504877, 0.15213147177124547, 0.1758429043696826], [0.20444629277725745, 0.1384248526833891, 0.13284211137091143, 0.1450906969666505, 0.1676108095284565], [0.19730644217917678, 0.13362957160216873, 0.12862411805893242, 0.140382878861077, 0.16188009140952256]]
 # hl1=[[999.9999999999993, 378.00549833109807, 341.81676107286467, 439.64002692361566, 814.5485934199312], [2000.0, 688.7351686791379, 594.0923005872694, 832.2321729766404, 1534.6588918597176], [2999.9999999999973, 992.6144983408004, 833.0622241138681, 1105.4651805339618, 2262.4914507957133], [4000.0000000000045, 1286.9002191427192, 975.8397972425894, 1542.4204707373306, 2996.7299506347563]]
 # xl1=[[0.23711040346982962, 0.20898029506796517, 0.19859014245503842, 0.19997893072423484, 0.2166432758364329], [0.214477766682788, 0.18921133081756952, 0.1803417542915865, 0.18130672268799236, 0.19599066390217781], [0.20444629277725745, 0.18075731035432713, 0.17211054774052043, 0.17340658475566814, 0.1870054493365237], [0.19730644217917678, 0.17418109912386884, 0.1664551316948601, 0.16726494131540554, 0.18071052477971727]]
-
+bet = [0.1, 0.2, 0.3, 0.4, 0.5]
 def figure4():
     bet = [0.25, 0.5, 0.75, 1.0]
     plt.figure()
@@ -149,5 +149,84 @@ def figure5():
     title_text = plt.gca().get_title()
     plt.savefig('picture/'+title_text + "0.png", dpi=300)
     plt.show()
-figure4()
-figure5()
+
+def figure1(data,name):
+    data=np.round(data,2)
+
+    fig, ax1 = plt.subplots(figsize=(16, 9))
+
+    data = data.T  # 转置数据以匹配 bar 图的数据列
+
+    bar_width = 0.15
+    x1 = np.array([i - bar_width for i in range(len(bet))])
+    x2 = np.array([i for i in range(len(bet))])
+    x3 = np.array([i + bar_width for i in range(len(bet))])
+    x4 = np.array([i + 2*bar_width for i in range(len(bet))])
+
+
+
+    ax1.bar(x1, data[0], width=bar_width, label='原始数据', color='white', edgecolor='black')
+    ax1.bar(x2, data[1], width=bar_width, label='正常加噪', hatch='', color=colors[9], edgecolor=colors[8])
+    ax1.bar(x3, data[2], width=bar_width, label='类别加噪', hatch='/', color='white', edgecolor=colors[7])
+    ax1.bar(x4, data[3], width=bar_width, label='隐私加噪', hatch='...', color='white', edgecolor=colors[2])
+
+    for i in range(len(bet)):
+        ax1.text(x1[i], data[0][i], str(data[0][i]), ha='center', fontsize=12, **TNR)
+        ax1.text(x2[i], data[1][i], str(data[1][i]), ha='center', fontsize=12, **TNR)
+        ax1.text(x3[i], data[2][i], str(data[2][i]), ha='center', fontsize=12, **TNR)
+        ax1.text(x4[i], data[3][i], str(data[3][i]), ha='center', fontsize=12, **TNR)
+
+    ax1.set_xlabel('噪声水平', fontsize=16)
+    ax1.set_ylabel(name, fontsize=16)
+    ax1.set_xticks(range(len(bet)))
+    ax1.set_xticklabels(bet, fontsize=16)
+    ax1.legend()
+    ax1.set_title('不同噪声水平下模型'+name+'对比', fontsize=20)
+
+    title_text = ax1.get_title()
+    plt.savefig('picture/' + title_text + "0.png", dpi=300)
+    plt.show()
+def figure2(data,name):
+    data=np.round(data,2)
+
+    fig, ax1 = plt.subplots(figsize=(16, 9))
+
+    data = data.T  # 转置数据以匹配 bar 图的数据列
+
+    bar_width = 0.15
+    x1 = np.array([i - bar_width for i in range(len(bet))])
+    x2 = np.array([i for i in range(len(bet))])
+    x3 = np.array([i + bar_width for i in range(len(bet))])
+    x4 = np.array([i + 2*bar_width for i in range(len(bet))])
+
+    bet1 = [i * 10000 for i in bet]
+    ax1.bar(x1, data[0], width=bar_width, label='原始数据', color='white', edgecolor='black')
+    ax1.bar(x2, data[1], width=bar_width, label='正常加噪', hatch='', color=colors[9], edgecolor=colors[8])
+    ax1.bar(x3, data[2], width=bar_width, label='类别加噪', hatch='/', color='white', edgecolor=colors[7])
+    ax1.bar(x4, data[3], width=bar_width, label='隐私加噪', hatch='...', color='white', edgecolor=colors[2])
+
+    for i in range(len(bet)):
+        ax1.text(x1[i], data[0][i], str(data[0][i]), ha='center', fontsize=12, **TNR)
+        ax1.text(x2[i], data[1][i], str(data[1][i]), ha='center', fontsize=12, **TNR)
+        ax1.text(x3[i], data[2][i], str(data[2][i]), ha='center', fontsize=12, **TNR)
+        ax1.text(x4[i], data[3][i], str(data[3][i]), ha='center', fontsize=12, **TNR)
+
+    ax1.set_xlabel('数据集大小', fontsize=16)
+    ax1.set_ylabel(name, fontsize=16)
+    ax1.set_xticks(range(len(bet)))
+    ax1.set_xticklabels(bet1, fontsize=16)
+    ax1.legend()
+    ax1.set_title('噪声水平0.2时不同数据集大小下模型'+name+'对比', fontsize=20)
+
+    title_text = ax1.get_title()
+    plt.savefig('picture/' + title_text + "0.png", dpi=300)
+    plt.show()
+# figure4()
+# figure5()
+names=['隐私含量', '隐私保护程度' ,'安全隐私含量']
+A=np.load('a.npy')
+B=np.load('b.npy')
+# for i in range(len(A)):
+#     figure1(A[i],names[i])
+for i in range(len(B)):
+    figure2(B[i],names[i])

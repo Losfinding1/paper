@@ -13,7 +13,8 @@ def calculate_combined_weights(w, p_final):
     返回值：
     w_final -- numpy 数组，表示结合后的最终权重
     """
-
+    w=np.array(w)
+    p_final=np.array(p_final)
     # 计算 α 和 β
     def Co(w, p_final):
         return np.sqrt(np.sum((w - p_final) ** 2) / (2 * len(w)))

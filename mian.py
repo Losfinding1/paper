@@ -2,7 +2,7 @@ import numpy as np
 from collections import Counter
 import matplotlib.pyplot as plt
 from pylab import mpl
-
+import pandas as pd
 mpl.rcParams['font.sans-serif'] = ['STZhongsong']  # 指定默认字体：解决plot不能显示中文问题
 mpl.rcParams['axes.unicode_minus'] = False         # 解决图中负号显示问题
 
@@ -12,7 +12,16 @@ from function1 import *
 from fig import *
 
 # 读取数据
+def save_to_csv(data, filepath):
+    if isinstance(data, np.ndarray):
+        df = pd.DataFrame(data, columns=header)
+    elif isinstance(data, pd.DataFrame):
+        df = data
+        df.columns = header  # Rename columns if provided DataFrame has different headers
+    else:
+        raise ValueError("Data must be a numpy array or pandas DataFrame.")
 
+    df.to_csv(filepath, index=False)
 header = np.genfromtxt('output1234.csv', delimiter=',', dtype=str, max_rows=1)
 
 # 定义每列的最大类别数量
@@ -71,7 +80,8 @@ def process_noisy_data(noisy_data, old_data, max_class, w_final, P_row_sums, bet
     for i, row in enumerate(noisy_data):
         for j, x in enumerate(row):
             r = p2[i][j]
-            r = -np.log(r)
+            if(r<1e-10  ): r=0
+            else: r = -np.log(r)
             P[i, j] = get_pij(r,  w_final[j], entropy1[j],p=p_i[i][j])
 
     # 归一化P矩阵
@@ -85,17 +95,22 @@ def add_laplace_noise(data,  Q, loss,mode, beta0=0.5,):
     if(mode==0):
         w_laplace = np.full(len(max_class),1)
     if(mode==1):
-        entropy = calculate_entropy(old_data)
-        Q_inv = np.array([ i for i in entropy])
-        w_laplace = Q_inv / sum(Q_inv) * len(Q_inv)
-    if(mode==2):
         Q_inv = np.array([ i for i in max_class])
         w_laplace = Q_inv / sum(Q_inv) * len(Q_inv)
-    if(mode==3):
+    if(mode==2):
         Q_inv = [1/i for i in Q]
         w_laplace = Q_inv / sum(Q_inv) * len(Q_inv)
-    beta = np.full(len(max_class), beta0) * w_laplace
+    if(mode==3):
+        Q_inv = [1000-i for i in loss]
+        w_laplace = Q_inv / sum(Q_inv) * len(Q_inv)
+    if(mode==4):
+        Q_inv = np.array([1/i for i in Q])
+        w_laplace1 = Q_inv / sum(Q_inv) * len(Q_inv)
+        Q_inv = [1000-i for i in loss]
+        w_laplace2 = Q_inv / sum(Q_inv) * len(Q_inv)
+        w_laplace=calculate_combined_weights(w_laplace1,w_laplace2)
 
+    beta = np.full(len(max_class), beta0) * w_laplace
     noisy_data = laplace_mech(data, beta)
     return noisy_data, beta
 # 层次分析法比较矩阵
@@ -119,7 +134,7 @@ yshl=[]
 yssl=[]
 bet=[0.1,0.2,0.3,0.4,0.5]
 for i in range(4):
-    filepath='outputs/output'+str(0)+'.csv'
+    filepath='outputs/output'+str(5*i)+'.csv'
     old_data = np.genfromtxt(filepath, delimiter=',', skip_header=1, dtype=int)
     #print("数据头部:", header)
 
@@ -143,10 +158,12 @@ for i in range(4):
     sl=[]
     hl.append(sum(Q))
     sl.append(avg_privacy_loss)
-    for ss in range(4):
-        noisy_data, beta = add_laplace_noise(old_data, Q,loss,mode=ss, beta0=bet[i])
+    for ss in range(3):
+        noisy_data, beta = add_laplace_noise(old_data, Q,loss,mode=ss, beta0=bet[1])
         Q_noisy, avg_privacy_loss_noisy,prc = process_noisy_data(noisy_data, old_data, max_class,w_final,
                                                           P_row_sums, beta)
+        filepath='data/noisydata'+str(ss)+'_'+str(bet[i])+'.csv'
+        save_to_csv(noisy_data,filepath)
         hl.append(sum(Q_noisy))
         sl.append(avg_privacy_loss_noisy)
     # print("平均隐私损失:", avg_privacy_loss_noisy)
@@ -157,13 +174,20 @@ for i in range(4):
     yshl.append(hl)
     yssl.append(sl)
     print('---------------------------------------------------------------------------------')
-print(yshl)
-print(yssl)
+
 yshl=np.array(yshl)
 yssl=np.array(yssl)
 yssl= yssl / yshl[:, 0][:, np.newaxis]
 zh = np.multiply(yssl, yshl)
+print(yshl)
+print(yssl)
 print(zh)
+A=[]
+A.append(yshl)
+A.append(yssl)
+A.append(zh)
+A = np.round(A, 2)
+np.save("b",A)
 
 
 
