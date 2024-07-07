@@ -190,7 +190,6 @@ A=[]
 A.append(yshl)
 A.append(yssl)
 A.append(zh)
-A = np.round(A, 2)
 np.save("b",A)
 
 

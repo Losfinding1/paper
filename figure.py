@@ -150,8 +150,11 @@ def figure5():
     plt.savefig('picture/'+title_text + "0.png", dpi=300)
     plt.show()
 
-def figure1(data,name):
-    data=np.round(data,2)
+def figure1(data,name,i):
+    if (i == 1):
+        data = np.round(data, 3)
+    else:
+        data = np.round(data, ).astype(int)
 
     fig, ax1 = plt.subplots(figsize=(16, 9))
 
@@ -186,20 +189,24 @@ def figure1(data,name):
     title_text = ax1.get_title()
     plt.savefig('picture/' + title_text + "0.png", dpi=300)
     plt.show()
-def figure2(data,name):
-    data=np.round(data,2)
+def figure2(data,name,i):
+
+    if(i==1) :  data=np.round(data,3)
+    else: data=np.round(data,).astype(int)
+
+
 
     fig, ax1 = plt.subplots(figsize=(16, 9))
 
     data = data.T  # 转置数据以匹配 bar 图的数据列
 
-    bar_width = 0.15
+    bar_width = 0.2
     x1 = np.array([i - bar_width for i in range(len(bet))])
     x2 = np.array([i for i in range(len(bet))])
     x3 = np.array([i + bar_width for i in range(len(bet))])
     x4 = np.array([i + 2*bar_width for i in range(len(bet))])
 
-    bet1 = [i * 10000 for i in bet]
+    bet1 = [1000,5000,10000,15000,20000]
     ax1.bar(x1, data[0], width=bar_width, label='原始数据', color='white', edgecolor='black')
     ax1.bar(x2, data[1], width=bar_width, label='正常加噪', hatch='', color=colors[9], edgecolor=colors[8])
     ax1.bar(x3, data[2], width=bar_width, label='类别加噪', hatch='/', color='white', edgecolor=colors[7])
@@ -226,7 +233,7 @@ def figure2(data,name):
 names=['隐私含量', '隐私保护程度' ,'安全隐私含量']
 A=np.load('a.npy')
 B=np.load('b.npy')
-# for i in range(len(A)):
-#     figure1(A[i],names[i])
+for i in range(len(A)):
+    figure1(A[i],names[i],i)
 for i in range(len(B)):
-    figure2(B[i],names[i])
+    figure2(B[i],names[i],i)
