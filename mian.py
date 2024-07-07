@@ -25,7 +25,7 @@ def save_to_csv(data, filepath):
 header = np.genfromtxt('output1234.csv', delimiter=',', dtype=str, max_rows=1)
 
 # 定义每列的最大类别数量
-max_class = [66, 7, 16, 7, 15, 6, 5, 2, 56, 2]
+max_class = [73, 9, 16, 7, 15, 6, 5, 2, 94, 2]
 
 # 定义get_pij函数
 def get_pij(r, w, e, p=1):
@@ -133,8 +133,11 @@ comparison_matrix1 = np.array([
 yshl=[]
 yssl=[]
 bet=[0.1,0.2,0.3,0.4,0.5]
-for i in range(4):
-    filepath='outputs/output'+str(5*i)+'.csv'
+for i in range(5):
+
+    if(i==0): m=0
+    else: m=5*i-1
+    filepath='outputs/output'+str(m)+'.csv'
     old_data = np.genfromtxt(filepath, delimiter=',', skip_header=1, dtype=int)
     #print("数据头部:", header)
 
@@ -160,6 +163,7 @@ for i in range(4):
     sl.append(avg_privacy_loss)
     for ss in range(3):
         noisy_data, beta = add_laplace_noise(old_data, Q,loss,mode=ss, beta0=bet[1])
+        print(ss)
         Q_noisy, avg_privacy_loss_noisy,prc = process_noisy_data(noisy_data, old_data, max_class,w_final,
                                                           P_row_sums, beta)
         filepath='data/noisydata'+str(ss)+'_'+str(bet[i])+'.csv'

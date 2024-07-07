@@ -263,6 +263,11 @@ def get_p111(old_data1, beta0, max_class):
                 prob.append(pdf)
             prob = np.array(prob)
             probs.append(prob / sum(prob))
+
+            if(sum(prob)==0 or  np.isnan(prob).any() ):
+                print(prob)
+                print(sum(prob))
+
         probs = np.array(probs)  # 转换为NumPy数组
         pr2,_=calculate_probability_matrix(probs)
         jg=np.array(expected(pr2))
